@@ -2,7 +2,7 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 from distributions import Categorical, DiagGaussian
-from utils import orthogonal
+from utils import orthogonal, att
 
 
 def weights_init(m):
@@ -33,13 +33,16 @@ class FFPolicy(nn.Module):
 
 
 class CNNPolicy(FFPolicy):
-    def __init__(self, num_inputs, action_space, use_gru):
+    def __init__(self, num_inputs, action_space, use_gru, use_att):
         super(CNNPolicy, self).__init__()
         self.conv1 = nn.Conv2d(num_inputs, 32, 8, stride=4)
         self.conv2 = nn.Conv2d(32, 64, 4, stride=2)
-        self.conv3 = nn.Conv2d(64, 32, 3, stride=1)
+        self.conv3 = nn.Conv2d(64, 256, 3, stride=1)
 
         self.linear1 = nn.Linear(32 * 7 * 7, 512)
+
+        if use_att:
+            self.att = att(256, 512)
 
         if use_gru:
             self.gru = nn.GRUCell(512, 512)
@@ -47,9 +50,11 @@ class CNNPolicy(FFPolicy):
         self.critic_linear = nn.Linear(512, 1)
 
         if action_space.__class__.__name__ == "Discrete":
+            print("Sampling from Discrete")
             num_outputs = action_space.n
             self.dist = Categorical(512, num_outputs)
         elif action_space.__class__.__name__ == "Box":
+            print("Sampling from Box")
             num_outputs = action_space.shape[0]
             self.dist = DiagGaussian(512, num_outputs)
         else:
@@ -93,20 +98,37 @@ class CNNPolicy(FFPolicy):
         x = self.conv3(x)
         x = F.relu(x)
 
-        x = x.view(-1, 32 * 7 * 7)
-        x = self.linear1(x)
-        x = F.relu(x)
+        if hasattr(self, 'att'):
+            print("GO FOT ATTENTION")
+            x = x.view(-1, 49, 256)
+        else:
+            x = x.view(-1, 32 * 7 * 7)
+            x = self.linear1(x)
+            x = F.relu(x)
 
         if hasattr(self, 'gru'):
             if inputs.size(0) == states.size(0):
-                x = states = self.gru(x, states * masks)
+                if hasattr(self, 'att'):
+                    print("I AMMMM PAYING ATTENTION")
+                    x = self.att(x, states*masks)
+                    x = states = self.gru(x, states * masks)
+
+                else:
+                    x = states = self.gru(x, states * masks)
             else:
                 x = x.view(-1, states.size(0), x.size(1))
                 masks = masks.view(-1, states.size(0), 1)
                 outputs = []
                 for i in range(x.size(0)):
-                    hx = states = self.gru(x[i], states * masks[i])
-                    outputs.append(hx)
+                    if hasattr(self, 'att'):
+                        print("I AMMMM PAYING ATTENTION BUT DIFFERENTLY")
+                        x[i] = self.att(x[i], states*masks)
+                        hx = states = self.gru(x[i], states * masks[i])
+                        outputs.append(hx)
+                    else:
+                        hx = states = self.gru(x[i], states * masks[i])
+                        outputs.append(hx)
+
                 x = torch.cat(outputs, 0)
         return self.critic_linear(x), x, states
 

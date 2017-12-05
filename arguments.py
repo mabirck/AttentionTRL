@@ -49,7 +49,7 @@ def get_args():
                         help='number of frames to train (default: 10e6)')
     parser.add_argument('--env-name', default='PongNoFrameskip-v4',
                         help='environment to train on (default: PongNoFrameskip-v4)')
-    parser.add_argument('--log-dir', default='/tmp/gym/',
+    parser.add_argument('--log-dir', default='./tmp/gym/',
                         help='directory to save agent logs (default: /tmp/gym)')
     parser.add_argument('--save-dir', default='./trained_models/',
                         help='directory to save agent logs (default: ./trained_models/)')
@@ -57,6 +57,8 @@ def get_args():
                         help='disables CUDA training')
     parser.add_argument('--recurrent-policy', action='store_true', default=False,
                         help='use a recurrent policy')
+    parser.add_argument('--att', action='store_true', default=False,
+                        help='Attention policy')
     parser.add_argument('--no-vis', action='store_true', default=False,
                         help='disables visdom visualization')
     args = parser.parse_args()

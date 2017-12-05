@@ -1,6 +1,8 @@
 import torch
 import torch.nn as nn
-
+import math
+from torch.autograd import Variable
+import torch.nn.functional as F
 
 # Necessary for my KFAC implementation.
 class AddBias(nn.Module):
@@ -15,6 +17,79 @@ class AddBias(nn.Module):
             bias = self._bias.t().view(1, -1, 1, 1)
 
         return x + bias
+class att(nn.Module):
+    def __init__(self, hidden_in, hidden_out):
+        super(att, self).__init__()
+        self.hidden_in = hidden_in
+        self.hidden_out = hidden_out
+        self.context_att = nn.Linear(self.hidden_in, self.hidden_out)
+        self.hidden_att = nn.Linear(self.hidden_out, self.hidden_out, bias=False) # NO BIAS
+
+    def forward(self, contexts, hidden):
+        print(contexts.size(), hidden.size(), "IN THE FORWARD GUY")
+        ##################### -- CONTEXT ENCODED-- ########################
+        c = self.context_att(contexts)
+        ###################################################################
+        #----------------------------------------------------------------#
+        ##################### -- HIDDEN ENCODED -- ######################
+        h = self.hidden_att(hidden)
+        print(h.size(), "THIS IS THE SIZE OF THE HIDDEN GUY")
+        #h = h.expand(49, 512)
+        ###############################################################
+        final = c + h
+        final = F.tanh(final)
+
+        alpha = self.joint_att(final)
+        alpha = self.softmax(alpha)
+
+        weighted_context = torch.sum(alpha * contexts, 0)
+
+        return weighted_context
+
+
+
+"""class att(nn.Module):
+    def __init__(self, method, hidden_size):
+        super(att, self).__init__()
+        self.method = method
+        self.hidden_size = hidden_size
+        self.attn = nn.Linear(self.hidden_size * 2, hidden_size)
+        self.v = nn.Parameter(torch.rand(hidden_size))
+        # update: initalizing with torch.rand is not a good idea
+        # Better practice is to initialize with zero mean and 1/sqrt(n) standard deviation
+        stdv = 1. / math.sqrt(self.v.size(0))
+        self.v.data.uniform_(-stdv, stdv)
+        # end of update
+        self.softmax = nn.Softmax()
+        self.USE_CUDA = False
+
+
+    def forward(self, hidden, encoder_outputs):
+        '''
+        :param hidden:
+            previous hidden state of the decoder, in shape (layers*directions,B,H)
+        :param encoder_outputs:
+            encoder outputs from Encoder, in shape (T,B,H)
+        :return
+            attention energies in shape (B,T)
+        '''
+        max_len = encoder_outputs.size(0)
+        this_batch_size = encoder_outputs.size(1)
+        # For storing attention energies
+        attn_energies = Variable(torch.zeros(this_batch_size, max_len))
+        if self.USE_CUDA:
+            attn_energies = attn_energies.cuda()
+        H = hidden.repeat(max_len,1,1).transpose(0,1)
+        encoder_outputs = encoder_outputs.transpose(0,1) # [B*T*H]
+        attn_energies = self.score(H,encoder_outputs) # compute attention score
+        return self.softmax(attn_energies).unsqueeze(1) # normalize with softmax
+
+    def score(self, hidden, encoder_outputs):
+        energy = self.attn(torch.cat([hidden, encoder_outputs], 2)) # [B*T*2H]->[B*T*H]
+        energy = energy.transpose(2,1) # [B*H*T]
+        v = self.v.repeat(encoder_outputs.data.shape[0],1).unsqueeze(1) #[B*1*H]
+        energy = torch.bmm(v,energy) # [B*1*T]
+        return energy.squeeze(1) #[B*T]"""
 
 # A temporary solution from the master branch.
 # https://github.com/pytorch/pytorch/blob/7752fe5d4e50052b3b0bbc9109e599f8157febc0/torch/nn/init.py#L312
