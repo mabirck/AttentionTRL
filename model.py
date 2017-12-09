@@ -117,7 +117,7 @@ class CNNPolicy(FFPolicy):
                     #print("BEFORE ATTEND",x.size())
                     x = self.att(x, states*masks)
                     #print("AFTER ATTEND",x.size())
-                    print(x)
+                    #print(x)
                     x = states = self.gru(x, states * masks)
 
                 else:
@@ -136,7 +136,7 @@ class CNNPolicy(FFPolicy):
                         #print("BEFORE ATTEND",x[i].size())
                         #print("SOMETHING IS WRONG HERE", states.size(), masks[i].size())
                         X = self.att(x[i], states*masks[i])
-                        print(X)
+                        #print(X)
                         #print("AFTER ATTEND",x[i].size())
                         hx = states = self.gru(X, states * masks[i])
                         outputs.append(hx)
