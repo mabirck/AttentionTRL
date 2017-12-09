@@ -45,16 +45,16 @@ class CNNPolicy(FFPolicy):
             self.att = att(256, 512)
 
         if use_gru:
-            self.gru = nn.GRUCell(512, 512)
+            self.gru = nn.GRUCell(256, 512)
 
         self.critic_linear = nn.Linear(512, 1)
 
         if action_space.__class__.__name__ == "Discrete":
-            print("Sampling from Discrete")
+            #print("Sampling from Discrete", action_space.n)
             num_outputs = action_space.n
             self.dist = Categorical(512, num_outputs)
         elif action_space.__class__.__name__ == "Box":
-            print("Sampling from Box")
+            #print("Sampling from Box")
             num_outputs = action_space.shape[0]
             self.dist = DiagGaussian(512, num_outputs)
         else:
@@ -99,7 +99,7 @@ class CNNPolicy(FFPolicy):
         x = F.relu(x)
 
         if hasattr(self, 'att'):
-            print("GO FOT ATTENTION")
+            #print("GO FOR ATTENTION","RECEIVEING FROM CONVOLUTION THIS ONE", x.size())
             x = x.view(-1, 49, 256)
         else:
             x = x.view(-1, 32 * 7 * 7)
@@ -109,21 +109,30 @@ class CNNPolicy(FFPolicy):
         if hasattr(self, 'gru'):
             if inputs.size(0) == states.size(0):
                 if hasattr(self, 'att'):
-                    print("I AMMMM PAYING ATTENTION")
+                    #print("I AMMMM PAYING ATTENTION")
+                    #print("BEFORE ATTEND",x.size())
                     x = self.att(x, states*masks)
+                    #print("AFTER ATTEND",x.size())
                     x = states = self.gru(x, states * masks)
 
                 else:
                     x = states = self.gru(x, states * masks)
             else:
-                x = x.view(-1, states.size(0), x.size(1))
-                masks = masks.view(-1, states.size(0), 1)
+                x = x.view(-1, 16, 49, 256)
+                #print(masks.size(), "B")
+                masks = masks.view(-1, 16 , 1)
+                #print(masks.size(), "A")
                 outputs = []
+                att_outputs = []
+
                 for i in range(x.size(0)):
                     if hasattr(self, 'att'):
-                        print("I AMMMM PAYING ATTENTION BUT DIFFERENTLY")
-                        x[i] = self.att(x[i], states*masks)
-                        hx = states = self.gru(x[i], states * masks[i])
+                        #print("I AMMMM PAYING ATTENTION BUT DIFFERENTLY")
+                        #print("BEFORE ATTEND",x[i].size())
+                        #print("SOMETHING IS WRONG HERE", states.size(), masks[i].size())
+                        X = self.att(x[i], states*masks[i])
+                        #print("AFTER ATTEND",x[i].size())
+                        hx = states = self.gru(X, states * masks[i])
                         outputs.append(hx)
                     else:
                         hx = states = self.gru(x[i], states * masks[i])

@@ -24,26 +24,37 @@ class att(nn.Module):
         self.hidden_out = hidden_out
         self.context_att = nn.Linear(self.hidden_in, self.hidden_out)
         self.hidden_att = nn.Linear(self.hidden_out, self.hidden_out, bias=False) # NO BIAS
+        self.joint_att = nn.Linear(self.hidden_out, 1)
+        self.softmax = nn.Softmax()
+
 
     def forward(self, contexts, hidden):
-        print(contexts.size(), hidden.size(), "IN THE FORWARD GUY")
+        #print(contexts.size(), hidden.size(), "IN THE FORWARD GUY")
         ##################### -- CONTEXT ENCODED-- ########################
         c = self.context_att(contexts)
+        #print(c.size(), "THIS IS THE SIZE OF THE CONTEXT GUY")
+
         ###################################################################
         #----------------------------------------------------------------#
         ##################### -- HIDDEN ENCODED -- ######################
+        #print(hidden.size(), "THE HIDDEN INSIDE ATTENTION")
         h = self.hidden_att(hidden)
-        print(h.size(), "THIS IS THE SIZE OF THE HIDDEN GUY")
+        h = h.unsqueeze(1)
+        #print("BEFORE REPEAT",h.size())
+        h = h.repeat(1, 49, 1)
+        #print(h.size(), "THIS IS THE SIZE OF THE HIDDEN GUY")
         #h = h.expand(49, 512)
         ###############################################################
         final = c + h
         final = F.tanh(final)
 
         alpha = self.joint_att(final)
+        alpha = alpha.squeeze()
         alpha = self.softmax(alpha)
-
-        weighted_context = torch.sum(alpha * contexts, 0)
-
+        #print("THIS IS FINAL", final.size(), "THIS IS alpha", alpha.size(), "AND THIS IS THE CONTEXT", contexts.size())
+        alpha = alpha.unsqueeze(2)
+        weighted_context = torch.sum((alpha * contexts), 1)
+        #print("SHIIIITI I FINISHED ?????????????????",weighted_context.size())
         return weighted_context
 
 
