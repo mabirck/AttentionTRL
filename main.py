@@ -12,9 +12,9 @@ import torch.optim as optim
 from torch.autograd import Variable
 
 from arguments import get_args
-#from baselines.common.vec_env.dummy_vec_env import DummyVecEnv
+from baselines.common.vec_env.dummy_vec_env import DummyVecEnv
 from baselines.common.vec_env.subproc_vec_env import SubprocVecEnv
-#from baselines.common.vec_env.vec_normalize import VecNormalize
+from baselines.common.vec_env.vec_normalize import VecNormalize
 from envs import make_env
 from kfac import KFACOptimizer
 from model import CNNPolicy, MLPPolicy
@@ -60,8 +60,7 @@ def main():
     if args.num_processes > 1:
         envs = SubprocVecEnv(envs)
     else:
-        pass
-        #envs = DummyVecEnv(envs)
+        envs = DummyVecEnv(envs)
 
     if len(envs.observation_space.shape) == 1:
         envs = VecNormalize(envs)
