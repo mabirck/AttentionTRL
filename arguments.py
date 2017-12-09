@@ -59,11 +59,12 @@ def get_args():
                         help='use a recurrent policy')
     parser.add_argument('--att', action='store_true', default=False,
                         help='Attention policy')
-    parser.add_argument('--no-vis', action='store_true', default=False,
+    parser.add_argument('--no-vis', action='store_true', default=True,
                         help='disables visdom visualization')
     args = parser.parse_args()
 
     args.cuda = not args.no_cuda and torch.cuda.is_available()
     args.vis = not args.no_vis
+    print(args.vis)
 
     return args
