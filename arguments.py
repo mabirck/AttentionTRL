@@ -45,7 +45,7 @@ def get_args():
                         help='save interval, one save per n updates (default: 10)')
     parser.add_argument('--vis-interval', type=int, default=100,
                         help='vis interval, one log per n updates (default: 100)')
-    parser.add_argument('--num-frames', type=int, default=10e6,
+    parser.add_argument('--num-frames', type=int, default=100*1e6,
                         help='number of frames to train (default: 10e6)')
     parser.add_argument('--env-name', default='PongNoFrameskip-v4',
                         help='environment to train on (default: PongNoFrameskip-v4)')

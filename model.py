@@ -3,6 +3,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 from distributions import Categorical, DiagGaussian
 from utils import orthogonal, att
+import matplotlib.pyplot as plt
 
 
 def weights_init(m):
@@ -89,6 +90,9 @@ class CNNPolicy(FFPolicy):
             self.dist.fc_mean.weight.data.mul_(0.01)
 
     def forward(self, inputs, states, masks):
+        #print(inputs.data.numpy()[0])
+        #plt.imshow(inputs.data.numpy()[0][0])
+        #plt.show()
         x = self.conv1(inputs / 255.0)
         x = F.relu(x)
 
@@ -113,6 +117,7 @@ class CNNPolicy(FFPolicy):
                     #print("BEFORE ATTEND",x.size())
                     x = self.att(x, states*masks)
                     #print("AFTER ATTEND",x.size())
+                    print(x)
                     x = states = self.gru(x, states * masks)
 
                 else:
@@ -131,6 +136,7 @@ class CNNPolicy(FFPolicy):
                         #print("BEFORE ATTEND",x[i].size())
                         #print("SOMETHING IS WRONG HERE", states.size(), masks[i].size())
                         X = self.att(x[i], states*masks[i])
+                        print(X)
                         #print("AFTER ATTEND",x[i].size())
                         hx = states = self.gru(X, states * masks[i])
                         outputs.append(hx)

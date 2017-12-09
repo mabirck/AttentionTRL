@@ -46,7 +46,7 @@ class att(nn.Module):
         #h = h.expand(49, 512)
         ###############################################################
         final = c + h
-        final = F.relu(final)
+        final = F.tanh(final)
 
         alpha = self.joint_att(final)
         alpha = alpha.squeeze()
