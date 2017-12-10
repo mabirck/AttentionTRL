@@ -47,6 +47,10 @@ def main():
     print("WARNING: All rewards are clipped or normalized so you need to use a monitor (see envs.py) or visdom plot to get true rewards")
     print("#######")
 
+    # NUM ENVS GIVEN IF IS MULTITASK OR NOT
+    num_envs = len(args.env_name)
+    print("GONNA TRAIN", num_envs, "GAMES!")
+
     os.environ['OMP_NUM_THREADS'] = '1'
 
     if args.vis:
@@ -54,8 +58,13 @@ def main():
         viz = Visdom()
         win = None
 
-    envs = [make_env(args.env_name, args.seed, i, args.log_dir)
-                for i in range(args.num_processes)]
+    extra = ''
+    if args.att:
+        extra = '/att_'
+
+    # MODIFIED TO ACCEPT MULTI-TASK
+    envs = [make_env(args.env_name[i//args.num_processes], args.seed, i, args.log_dir+extra)
+                for i in range(args.num_processes * num_envs)]
 
     if args.num_processes > 1:
         envs = SubprocVecEnv(envs)
@@ -241,7 +250,11 @@ def main():
             save_model = [save_model,
                             hasattr(envs, 'ob_rms') and envs.ob_rms or None]
 
-            torch.save(save_model, os.path.join(save_path, args.env_name + ".pt"))
+            if args.att:
+                extra = 'att'
+            else:
+                extra = ''
+            torch.save(save_model, os.path.join(save_path, extra+"_".join(args.env_name) + ".pt"))
 
         if j % args.log_interval == 0:
             end = time.time()

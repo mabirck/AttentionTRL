@@ -31,6 +31,7 @@ class att(nn.Module):
     def forward(self, contexts, hidden):
         #print(contexts.size(), hidden.size(), "IN THE FORWARD GUY")
         ##################### -- CONTEXT ENCODED-- ########################
+        #print(contexts.size())
         c = self.context_att(contexts)
         #print(c.size(), "THIS IS THE SIZE OF THE CONTEXT GUY")
 
@@ -45,6 +46,7 @@ class att(nn.Module):
         #print(h.size(), "THIS IS THE SIZE OF THE HIDDEN GUY")
         #h = h.expand(49, 512)
         ###############################################################
+        #print(c.size(), h.size())
         final = c + h
         final = F.tanh(final)
 

@@ -38,26 +38,35 @@ class CNNPolicy(FFPolicy):
         super(CNNPolicy, self).__init__()
         self.conv1 = nn.Conv2d(num_inputs, 32, 8, stride=4)
         self.conv2 = nn.Conv2d(32, 64, 4, stride=2)
-        self.conv3 = nn.Conv2d(64, 256, 3, stride=1)
+
+        if use_att:
+            self.conv3 = nn.Conv2d(64, 256, 3, stride=1)
+        else:
+            self.conv3 = nn.Conv2d(64, 32, 3, stride=1)
+
 
         self.linear1 = nn.Linear(32 * 7 * 7, 512)
 
         if use_att:
-            self.att = att(256, 512)
+            self.att = att(256, 256)
 
         if use_gru:
-            self.gru = nn.GRUCell(256, 512)
+            if use_att:
+                self.gru = nn.GRUCell(256, 256)
+            else:
+                self.gru = nn.GRUCell(512, 256)
 
-        self.critic_linear = nn.Linear(512, 1)
+
+        self.critic_linear = nn.Linear(256, 1)
 
         if action_space.__class__.__name__ == "Discrete":
             #print("Sampling from Discrete", action_space.n)
             num_outputs = action_space.n
-            self.dist = Categorical(512, num_outputs)
+            self.dist = Categorical(256, num_outputs)
         elif action_space.__class__.__name__ == "Box":
             #print("Sampling from Box")
             num_outputs = action_space.shape[0]
-            self.dist = DiagGaussian(512, num_outputs)
+            self.dist = DiagGaussian(256, num_outputs)
         else:
             raise NotImplementedError
 
@@ -67,7 +76,7 @@ class CNNPolicy(FFPolicy):
     @property
     def state_size(self):
         if hasattr(self, 'gru'):
-            return 512
+            return 256
         else:
             return 1
 
@@ -123,12 +132,15 @@ class CNNPolicy(FFPolicy):
                 else:
                     x = states = self.gru(x, states * masks)
             else:
-                x = x.view(-1, 16, 49, 256)
-                #print(masks.size(), "B")
-                masks = masks.view(-1, 16 , 1)
-                #print(masks.size(), "A")
+
+                if hasattr(self, 'att'):
+                    x = x.view(-1, 16, 49, 256)
+                    masks = masks.view(-1, 16 , 1)
+                else:
+                    x = x.view(-1, states.size(0), x.size(1))
+                    masks = masks.view(-1, states.size(0), 1)
+
                 outputs = []
-                att_outputs = []
 
                 for i in range(x.size(0)):
                     if hasattr(self, 'att'):
@@ -145,6 +157,7 @@ class CNNPolicy(FFPolicy):
                         outputs.append(hx)
 
                 x = torch.cat(outputs, 0)
+                #print(x)
         return self.critic_linear(x), x, states
 
 

@@ -20,7 +20,10 @@ def make_env(env_id, seed, rank, log_dir):
             env = make_atari(env_id)
         env.seed(seed + rank)
         if log_dir is not None:
-            env = bench.Monitor(env, os.path.join(log_dir, str(rank)))
+            PATH = log_dir+env_id+'_'+str(seed)+"/"+env_id+'/'
+            if not(os.path.exists(PATH)):
+                os.makedirs(PATH,0o777)
+            env = bench.Monitor(env, os.path.join(PATH, str(rank)))
         if is_atari:
             env = wrap_deepmind(env)
         # If the input has shape (W,H,3), wrap for PyTorch convolutions
