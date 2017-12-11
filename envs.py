@@ -22,7 +22,7 @@ def make_env(env_id, seed, rank, log_dir):
         env.seed(seed + rank)
         #print(log_dir)
         if log_dir is not None:
-            PATH = log_dir+env_id+'_'+str(seed)+"/"+env_id+'/'
+            PATH = log_dir+env_id+'/'+env_id+'_'+str(seed)+"/"+env_id+'/'
             if not(os.path.exists(PATH)):
                 os.makedirs(PATH,0o777)
             env = bench.Monitor(env, os.path.join(PATH, str(rank)))

@@ -62,11 +62,11 @@ def main():
 
     extra = "_".join([ name[:4] for name in args.env_name ])
     if args.att:
-        extra = 'att_'+extra+'/'
+        extra = 'att_'+extra
 
     # MODIFIED TO ACCEPT MULTI-TASK
     num_proc = args.num_processes // num_envs
-    envs = [make_env(args.env_name[i//num_proc], args.seed, i, args.log_dir+extra)
+    envs = [make_env(args.env_name[i//num_proc], args.seed, i, args.log_dir+extra+'/')
                 for i in range(args.num_processes)]
 
     if args.num_processes > 1:
