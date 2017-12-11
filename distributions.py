@@ -12,7 +12,7 @@ class Categorical(nn.Module):
         super(Categorical, self).__init__()
         self.linear = nn.Linear(num_inputs, num_outputs)
         if torch.cuda.is_available():
-            self.action_mask = Variable(torch.from_numpy(action_mask)).float().cuda()
+            self.action_mask = Variable(torch.from_numpy(action_mask).cuda().float())
         else:
             self.action_mask = Variable(torch.from_numpy(action_mask)).float()
 
