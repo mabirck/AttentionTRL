@@ -11,7 +11,10 @@ class Categorical(nn.Module):
     def __init__(self, num_inputs, num_outputs, action_mask):
         super(Categorical, self).__init__()
         self.linear = nn.Linear(num_inputs, num_outputs)
-        self.action_mask = Variable(torch.from_numpy(action_mask)).float()
+        if torch.cuda.is_available():
+            self.action_mask = Variable(torch.from_numpy(action_mask)).float().cuda()
+        else:
+            self.action_mask = Variable(torch.from_numpy(action_mask)).float()
 
     def forward(self, x):
         x = self.linear(x)
