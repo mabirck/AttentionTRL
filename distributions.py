@@ -23,7 +23,8 @@ class Categorical(nn.Module):
 
     def sample(self, x, deterministic):
         x = self(x)
-        probs = F.softmax(x, dim=1)
+        # ENSURING NOT TO BE ZERO TO MAKE MASKS WORK #
+        probs = F.softmax(x, dim=1) + 1.0
         #print("deterministic", deterministic)
 
         small = torch.zeros_like(probs)

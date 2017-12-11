@@ -60,9 +60,9 @@ def main():
         viz = Visdom()
         win = None
 
-    extra = ''
+    extra = "_".join([ name[:4] for name in args.env_name ])
     if args.att:
-        extra = '/att_'
+        extra = 'att_'+extra+'/'
 
     # MODIFIED TO ACCEPT MULTI-TASK
     num_proc = args.num_processes // num_envs

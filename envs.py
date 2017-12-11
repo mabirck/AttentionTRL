@@ -20,6 +20,7 @@ def make_env(env_id, seed, rank, log_dir):
         if is_atari:
             env = make_atari(env_id)
         env.seed(seed + rank)
+        #print(log_dir)
         if log_dir is not None:
             PATH = log_dir+env_id+'_'+str(seed)+"/"+env_id+'/'
             if not(os.path.exists(PATH)):
