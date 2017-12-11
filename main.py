@@ -28,6 +28,12 @@ if args.recurrent_policy:
     assert args.algo in ['a2c', 'ppo'], \
         'Recurrent policy is not implemented for ACKTR'
 
+# NUM ENVS GIVEN IF IS MULTITASK OR NOT
+num_envs = len(args.env_name)
+print("GONNA TRAIN", num_envs, "GAMES!")
+args.num_processes *= num_envs
+
+
 num_updates = int(args.num_frames) // args.num_steps // args.num_processes
 
 torch.manual_seed(args.seed)
@@ -47,10 +53,6 @@ def main():
     print("WARNING: All rewards are clipped or normalized so you need to use a monitor (see envs.py) or visdom plot to get true rewards")
     print("#######")
 
-    # NUM ENVS GIVEN IF IS MULTITASK OR NOT
-    num_envs = len(args.env_name)
-    print("GONNA TRAIN", num_envs, "GAMES!")
-
     os.environ['OMP_NUM_THREADS'] = '1'
 
     if args.vis:
@@ -63,8 +65,9 @@ def main():
         extra = '/att_'
 
     # MODIFIED TO ACCEPT MULTI-TASK
-    envs = [make_env(args.env_name[i//args.num_processes], args.seed, i, args.log_dir+extra)
-                for i in range(args.num_processes * num_envs)]
+    num_proc = args.num_processes // num_envs
+    envs = [make_env(args.env_name[i//num_proc], args.seed, i, args.log_dir+extra)
+                for i in range(args.num_processes)]
 
     if args.num_processes > 1:
         envs = SubprocVecEnv(envs)
@@ -74,11 +77,24 @@ def main():
     if len(envs.observation_space.shape) == 1:
         envs = VecNormalize(envs)
 
+    actionMasks = []
+    for e in range(args.num_processes):
+        #print(e, num_cpu)
+        envs.remotes[e].send(('get_spaces', None))
+        actionMasks.append(envs.remotes[e].recv()[0].n)
+    print(actionMasks)
+
+    action_mask = np.array([list(range(18)) for l in actionMasks])
+    print(action_mask)
+    action_mask = np.array([m < actionMasks[k] for k, m in enumerate(action_mask)])
+    action_mask = action_mask.astype(float) + 1e-32
+    #print(action_mask)
+
     obs_shape = envs.observation_space.shape
     obs_shape = (obs_shape[0] * args.num_stack, *obs_shape[1:])
 
     if len(envs.observation_space.shape) == 3:
-        actor_critic = CNNPolicy(obs_shape[0], envs.action_space, args.recurrent_policy, args.att)
+        actor_critic = CNNPolicy(obs_shape[0], envs.action_space, args.recurrent_policy, args.att, action_mask)
     else:
         assert not args.recurrent_policy, \
             "Recurrent policy is not implemented for the MLP controller"

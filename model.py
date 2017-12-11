@@ -3,8 +3,6 @@ import torch.nn as nn
 import torch.nn.functional as F
 from distributions import Categorical, DiagGaussian
 from utils import orthogonal, att
-import matplotlib.pyplot as plt
-
 
 def weights_init(m):
     classname = m.__class__.__name__
@@ -34,7 +32,7 @@ class FFPolicy(nn.Module):
 
 
 class CNNPolicy(FFPolicy):
-    def __init__(self, num_inputs, action_space, use_gru, use_att):
+    def __init__(self, num_inputs, action_space, use_gru, use_att, action_mask):
         super(CNNPolicy, self).__init__()
         self.conv1 = nn.Conv2d(num_inputs, 32, 8, stride=4)
         self.conv2 = nn.Conv2d(32, 64, 4, stride=2)
@@ -60,9 +58,9 @@ class CNNPolicy(FFPolicy):
         self.critic_linear = nn.Linear(256, 1)
 
         if action_space.__class__.__name__ == "Discrete":
-            #print("Sampling from Discrete", action_space.n)
-            num_outputs = action_space.n
-            self.dist = Categorical(256, num_outputs)
+            # HARCODED CHAGING
+            num_outputs = 18
+            self.dist = Categorical(256, num_outputs, action_mask)
         elif action_space.__class__.__name__ == "Box":
             #print("Sampling from Box")
             num_outputs = action_space.shape[0]
@@ -99,9 +97,6 @@ class CNNPolicy(FFPolicy):
             self.dist.fc_mean.weight.data.mul_(0.01)
 
     def forward(self, inputs, states, masks):
-        #print(inputs.data.numpy()[0])
-        #plt.imshow(inputs.data.numpy()[0][0])
-        #plt.show()
         x = self.conv1(inputs / 255.0)
         x = F.relu(x)
 
@@ -134,8 +129,8 @@ class CNNPolicy(FFPolicy):
             else:
 
                 if hasattr(self, 'att'):
-                    x = x.view(-1, 16, 49, 256)
-                    masks = masks.view(-1, 16 , 1)
+                    x = x.view(-1, states.size(0), 49, 256)
+                    masks = masks.view(-1, states.size(0) , 1)
                 else:
                     x = x.view(-1, states.size(0), x.size(1))
                     masks = masks.view(-1, states.size(0), 1)
@@ -158,6 +153,7 @@ class CNNPolicy(FFPolicy):
 
                 x = torch.cat(outputs, 0)
                 #print(x)
+
         return self.critic_linear(x), x, states
 
 

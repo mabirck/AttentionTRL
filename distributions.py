@@ -4,38 +4,52 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 from torch.autograd import Variable
-from utils import AddBias
+from utils import AddBias, where
 
 
 class Categorical(nn.Module):
-    def __init__(self, num_inputs, num_outputs):
+    def __init__(self, num_inputs, num_outputs, action_mask):
         super(Categorical, self).__init__()
         self.linear = nn.Linear(num_inputs, num_outputs)
+        self.action_mask = Variable(torch.from_numpy(action_mask)).float()
 
     def forward(self, x):
         x = self.linear(x)
         return x
 
+
     def sample(self, x, deterministic):
         x = self(x)
-
-        probs = F.softmax(x)
+        probs = F.softmax(x, dim=1)
         #print("deterministic", deterministic)
+
+        small = torch.zeros_like(probs)
+        #value = torch.min(probs).data.numpy()[0]
+        #small.fill_(float(value))
+
+        probs = where(self.action_mask, probs, small)
+        #print(probs)
         if deterministic is False:
+            #print("deterministic is false?")
             action = probs.multinomial()
         else:
             action = probs.max(1, keepdim=True)[1]
+
+        #print(action.data.numpy(), "ACCTT")
         return action
 
     def logprobs_and_entropy(self, x, actions):
         x = self(x)
 
-        log_probs = F.log_softmax(x)
-        probs = F.softmax(x)
-
+        log_probs = F.log_softmax(x, dim=1)
+        probs = F.softmax(x, dim=1)
+        #print(log_probs.size(), probs.size(),"LOUCURA")
         action_log_probs = log_probs.gather(1, actions)
 
         dist_entropy = -(log_probs * probs).sum(-1).mean()
+
+        #print(action_log_probs.data.numpy(), dist_entropy.data.numpy(), actions.data.numpy(),"LOUCURA 2")
+
         return action_log_probs, dist_entropy
 
 

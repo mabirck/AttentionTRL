@@ -25,7 +25,7 @@ class att(nn.Module):
         self.context_att = nn.Linear(self.hidden_in, self.hidden_out)
         self.hidden_att = nn.Linear(self.hidden_out, self.hidden_out, bias=False) # NO BIAS
         self.joint_att = nn.Linear(self.hidden_out, 1)
-        self.softmax = nn.Softmax()
+        self.softmax = nn.Softmax(dim=1)
 
 
     def forward(self, contexts, hidden):
@@ -52,6 +52,7 @@ class att(nn.Module):
 
         alpha = self.joint_att(final)
         alpha = alpha.squeeze()
+        #print(alpha)
         alpha = self.softmax(alpha)
         #print("THIS IS FINAL", final.size(), "THIS IS alpha", alpha.size(), "AND THIS IS THE CONTEXT", contexts.size())
         alpha = alpha.unsqueeze(2)
@@ -131,3 +132,6 @@ def orthogonal(tensor, gain=1):
     tensor.view_as(q).copy_(q)
     tensor.mul_(gain)
     return tensor
+
+def where(cond, x_1, x_2):
+    return (cond * x_1) + ((1-cond) * x_2)

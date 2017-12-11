@@ -14,6 +14,7 @@ except ImportError:
 
 def make_env(env_id, seed, rank, log_dir):
     def _thunk():
+        print("<_________________",env_id,"__________________>")
         env = gym.make(env_id)
         is_atari = hasattr(gym.envs, 'atari') and isinstance(env.unwrapped, gym.envs.atari.atari_env.AtariEnv)
         if is_atari:
