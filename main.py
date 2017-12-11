@@ -82,10 +82,10 @@ def main():
         #print(e, num_cpu)
         envs.remotes[e].send(('get_spaces', None))
         actionMasks.append(envs.remotes[e].recv()[0].n)
-    print(actionMasks)
+    #print(actionMasks)
 
     action_mask = np.array([list(range(18)) for l in actionMasks])
-    print(action_mask)
+    #print(action_mask)
     action_mask = np.array([m < actionMasks[k] for k, m in enumerate(action_mask)])
     action_mask = action_mask.astype(float) + 1e-32
     #print(action_mask)
@@ -120,6 +120,7 @@ def main():
 
     def update_current_obs(obs):
         shape_dim0 = envs.observation_space.shape[0]
+        #print(shape_dim0,"<-------------- observation shape")
         obs = torch.from_numpy(obs).float()
         if args.num_stack > 1:
             current_obs[:, :-shape_dim0] = current_obs[:, shape_dim0:]
