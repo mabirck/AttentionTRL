@@ -8,15 +8,9 @@ from utils import AddBias, where
 
 
 class Categorical(nn.Module):
-    def __init__(self, num_inputs, num_outputs, action_mask):
+    def __init__(self, num_inputs, num_outputs):
         super(Categorical, self).__init__()
         self.linear = nn.Linear(num_inputs, num_outputs)
-        if torch.cuda.is_available():
-            self.action_mask = Variable(torch.from_numpy(action_mask[0]).cuda().float())
-            self.batch_mask = Variable(torch.from_numpy(action_mask[1]).cuda().float())
-        else:
-            self.action_mask = Variable(torch.from_numpy(action_mask[0])).float()
-            self.batch_mask = Variable(torch.from_numpy(action_mask[1])).float()
 
     def forward(self, x):
         x = self.linear(x)
@@ -25,16 +19,7 @@ class Categorical(nn.Module):
 
     def sample(self, x, deterministic):
         x = self(x)
-        # ENSURING NOT TO BE ZERO TO MAKE MASKS WORK
-        probs = F.softmax(x, dim=1) + 1.0
-        #print("deterministic", deterministic)
-
-        small = torch.zeros_like(probs)
-        #value = torch.min(probs).data.numpy()[0]
-        #small.fill_(float(value))
-
-        probs = where(self.action_mask, probs, small)
-        #print(probs)
+        probs = F.softmax(x, dim=1)
         if deterministic is False:
             #print("deterministic is false?")
             action = probs.multinomial()
@@ -49,19 +34,6 @@ class Categorical(nn.Module):
 
         log_probs = F.log_softmax(x, dim=1)
         probs = F.softmax(x, dim=1)
-
-        if(self.action_mask.size(0) == probs.size(0)):
-            small = torch.zeros_like(probs)
-            #print(probs.size(), log_probs.size())
-            probs = where(self.action_mask, probs, small)
-            log_probs = where(self.action_mask, log_probs, small)
-        else:
-            small = torch.zeros_like(probs)
-            #print(probs.size(), log_probs.size())
-            probs = where(self.batch_mask, probs, small)
-            log_probs = where(self.batch_mask, log_probs, small)
-
-
 
         action_log_probs = log_probs.gather(1, actions)
 

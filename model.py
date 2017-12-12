@@ -32,7 +32,7 @@ class FFPolicy(nn.Module):
 
 
 class CNNPolicy(FFPolicy):
-    def __init__(self, num_inputs, action_space, use_gru, use_att, action_mask):
+    def __init__(self, num_inputs, action_space, use_gru, use_att):
         super(CNNPolicy, self).__init__()
         self.conv1 = nn.Conv2d(num_inputs, 32, 8, stride=4)
         self.conv2 = nn.Conv2d(32, 64, 4, stride=2)
@@ -59,8 +59,8 @@ class CNNPolicy(FFPolicy):
 
         if action_space.__class__.__name__ == "Discrete":
             # HARCODED CHAGING
-            num_outputs = 18
-            self.dist = Categorical(256, num_outputs, action_mask)
+            num_outputs = action_space.n
+            self.dist = Categorical(256, num_outputs)
         elif action_space.__class__.__name__ == "Box":
             #print("Sampling from Box")
             num_outputs = action_space.shape[0]
