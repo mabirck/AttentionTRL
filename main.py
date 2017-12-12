@@ -90,6 +90,14 @@ def main():
     action_mask = action_mask.astype(float) + 1e-32
     #print(action_mask)
 
+    #print(args.num_steps)
+    batch_mask = np.array([ [l] * args.num_steps for l in action_mask])
+    batch_mask = batch_mask.reshape(-1, 18)
+    #print(batch_mask.shape)
+    #print(batch_mask)
+    action_mask = [action_mask, batch_mask]
+
+
     obs_shape = envs.observation_space.shape
     obs_shape = (obs_shape[0] * args.num_stack, *obs_shape[1:])
 
