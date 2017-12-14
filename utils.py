@@ -51,7 +51,8 @@ class att(nn.Module):
         final = F.tanh(final)
 
         alpha = self.joint_att(final)
-        alpha = alpha.squeeze()
+        #print(alpha.size())
+        alpha = alpha.squeeze(2)
         #print(alpha)
         alpha = self.softmax(alpha)
         #print("THIS IS FINAL", final.size(), "THIS IS alpha", alpha.size(), "AND THIS IS THE CONTEXT", contexts.size())

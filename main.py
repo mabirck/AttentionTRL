@@ -80,7 +80,10 @@ def main():
     obs_shape = envs.observation_space.shape
     obs_shape = (obs_shape[0] * args.num_stack, *obs_shape[1:])
 
-    if len(envs.observation_space.shape) == 3:
+    if args.load_model != None:
+        actor_critic, ob_rms = \
+                    torch.load(args.load_model)
+    elif len(envs.observation_space.shape) == 3:
         actor_critic = CNNPolicy(obs_shape[0], envs.action_space, args.recurrent_policy, args.att)
     else:
         assert not args.recurrent_policy, \

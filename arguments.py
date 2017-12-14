@@ -61,6 +61,10 @@ def get_args():
                         help='Attention policy')
     parser.add_argument('--no-vis', action='store_true', default=True,
                         help='disables visdom visualization')
+
+    parser.add_argument('--load_model', default=None,
+                        help='directory to save agent logs (default: None)')
+
     args = parser.parse_args()
 
     args.cuda = not args.no_cuda and torch.cuda.is_available()
