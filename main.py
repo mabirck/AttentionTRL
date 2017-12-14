@@ -34,7 +34,8 @@ print("GONNA TRAIN", num_envs, "GAMES!")
 args.num_processes *= num_envs
 
 
-num_updates = int(args.num_frames) // args.num_steps // args.num_processes
+num_updates = int(args.num_frames) * num_envs // args.num_steps // args.num_processes
+print("DURING", num_updates, "STEPS!")
 
 torch.manual_seed(args.seed)
 if args.cuda:
@@ -261,7 +262,7 @@ def main():
                 extra = 'att'
             else:
                 extra = ''
-            torch.save(save_model, os.path.join(save_path, extra+"_".join(args.env_name) + ".pt"))
+            torch.save(save_model, os.path.join(save_path, extra+"_".join(args.env_name)+'_'+str(args.seed)+ ".pt"))
 
         if j % args.log_interval == 0:
             end = time.time()
