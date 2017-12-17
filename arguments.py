@@ -65,6 +65,10 @@ def get_args():
     parser.add_argument('--load_model', default=None,
                         help='directory to save agent logs (default: None)')
 
+    parser.add_argument('--transfer', action='store_true', default=False,
+                        help='Transfer policy')
+
+
     args = parser.parse_args()
 
     args.cuda = not args.no_cuda and torch.cuda.is_available()

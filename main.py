@@ -33,8 +33,13 @@ num_envs = len(args.env_name)
 print("GONNA TRAIN", num_envs, "GAMES!")
 args.num_processes *= num_envs
 
+if args.transfer:
+    print("LET'S MAKE A TRANFER POLICY")
+    factor = 0.1
+else:
+    factor = 1
 
-num_updates = int(args.num_frames) * num_envs // args.num_steps // args.num_processes
+num_updates = int((int(args.num_frames) * num_envs // args.num_steps // args.num_processes) * factor)
 print("DURING", num_updates, "STEPS!")
 
 torch.manual_seed(args.seed)
@@ -64,6 +69,8 @@ def main():
     extra = "_".join([ name[:4] for name in args.env_name ])
     if args.att:
         extra = 'att_'+extra
+        if args.transfer:
+            extra = 'transfer_'+extra
 
     # MODIFIED TO ACCEPT MULTI-TASK
     num_proc = args.num_processes // num_envs
@@ -262,6 +269,10 @@ def main():
                 extra = 'att'
             else:
                 extra = ''
+
+            if args.transfer:
+                extra += '_transfer'
+
             torch.save(save_model, os.path.join(save_path, extra+"_".join(args.env_name)+'_'+str(args.seed)+ ".pt"))
 
         if j % args.log_interval == 0:
