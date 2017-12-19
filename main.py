@@ -3,7 +3,7 @@ import glob
 import os
 import time
 
-import gym
+import gym, roboschool
 import numpy as np
 import torch
 import torch.nn as nn
@@ -88,6 +88,7 @@ def main():
     obs_shape = envs.observation_space.shape
     obs_shape = (obs_shape[0] * args.num_stack, *obs_shape[1:])
 
+    print(envs.observation_space.shape)
     if args.load_model != None:
         actor_critic, ob_rms = \
                     torch.load(args.load_model)
@@ -96,6 +97,7 @@ def main():
     else:
         assert not args.recurrent_policy, \
             "Recurrent policy is not implemented for the MLP controller"
+        print("OI")
         actor_critic = MLPPolicy(obs_shape[0], envs.action_space)
 
     if envs.action_space.__class__.__name__ == "Discrete":

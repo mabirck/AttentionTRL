@@ -22,12 +22,12 @@ class att(nn.Module):
         super(att, self).__init__()
         self.hidden_in = hidden_in
         self.hidden_out = hidden_out
-        self.context_att = nn.Linear(self.hidden_in, self.hidden_out)
-        self.hidden_att = nn.Linear(self.hidden_out, self.hidden_out, bias=False) # NO BIAS
+        self.context_att = nn.Linear(256, self.hidden_out)
+        self.hidden_att = nn.Linear(256, self.hidden_out, bias=False) # NO BIAS
         self.joint_att = nn.Linear(self.hidden_out, 1)
         self.softmax = nn.Softmax(dim=1)
 
-
+        self.project = nn.Linear(self.hidden_in, self.hidden_out, bias=False) # NO BIAS
     def forward(self, contexts, hidden):
         #print(contexts.size(), hidden.size(), "IN THE FORWARD GUY")
         ##################### -- CONTEXT ENCODED-- ########################
@@ -57,7 +57,7 @@ class att(nn.Module):
         alpha = self.softmax(alpha)
         #print("THIS IS FINAL", final.size(), "THIS IS alpha", alpha.size(), "AND THIS IS THE CONTEXT", contexts.size())
         alpha = alpha.unsqueeze(2)
-        weighted_context = torch.sum((alpha * contexts), 1)
+        weighted_context = torch.sum((alpha * self.project(contexts)), 1)
         #print("SHIIIITI I FINISHED ?????????????????",weighted_context.size())
         return weighted_context
 
