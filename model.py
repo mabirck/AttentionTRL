@@ -46,11 +46,11 @@ class CNNPolicy(FFPolicy):
         self.linear1 = nn.Linear(32 * 7 * 7, 512)
 
         if use_att:
-            self.att = att(256, 512)
+            self.att = att(256, 256)
 
         if use_gru:
             if use_att:
-                self.gru = nn.GRUCell(512, 256)
+                self.gru = nn.GRUCell(256, 256)
             else:
                 self.gru = nn.GRUCell(512, 256)
 
@@ -152,7 +152,6 @@ class CNNPolicy(FFPolicy):
                         outputs.append(hx)
 
                 x = torch.cat(outputs, 0)
-                #print(x)
 
         return self.critic_linear(x), x, states
 

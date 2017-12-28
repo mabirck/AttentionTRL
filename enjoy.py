@@ -115,6 +115,6 @@ for i in range(50000):
             humanPos, humanOrn = p.getBasePositionAndOrientation(torsoId)
             p.resetDebugVisualizerCamera(distance, yaw, -20, humanPos)
 
-    #render_func('human')
+    render_func('human')
 
-    #print(dir(env.envs[0]))
+    print(dir(env.envs[0]))
