@@ -2,7 +2,7 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 from distributions import Categorical, DiagGaussian
-from utils import orthogonal, att
+from utils import orthogonal, att, temporal_att
 
 def weights_init(m):
     classname = m.__class__.__name__
@@ -37,7 +37,8 @@ class CNNPolicy(FFPolicy):
         self.conv1 = nn.Conv2d(num_inputs, 32, 8, stride=4)
         self.conv2 = nn.Conv2d(32, 64, 4, stride=2)
 
-        if use_att:
+        if use_att == 'spatial':
+            #print('spatial')
             self.conv3 = nn.Conv2d(64, 256, 3, stride=1)
         else:
             self.conv3 = nn.Conv2d(64, 32, 3, stride=1)
@@ -45,11 +46,16 @@ class CNNPolicy(FFPolicy):
 
         self.linear1 = nn.Linear(32 * 7 * 7, 512)
 
-        if use_att:
+        if use_att == 'spatial':
+            #print('spatial')
             self.att = att(256, 256)
+        elif use_att == 'temporal':
+            #print('temporal')
+            self.att = temporal_att(256, 256)
 
         if use_gru:
-            if use_att:
+            if use_att == 'spatial':
+                #print('spatial')
                 self.gru = nn.GRUCell(256, 256)
             else:
                 self.gru = nn.GRUCell(512, 256)
@@ -70,6 +76,7 @@ class CNNPolicy(FFPolicy):
 
         self.train()
         self.reset_parameters()
+        self.use_att = use_att
 
     @property
     def state_size(self):
@@ -106,7 +113,7 @@ class CNNPolicy(FFPolicy):
         x = self.conv3(x)
         x = F.relu(x)
 
-        if hasattr(self, 'att'):
+        if self.use_att == 'spatial':
             #print("GO FOR ATTENTION","RECEIVEING FROM CONVOLUTION THIS ONE", x.size())
             x = x.view(-1, 49, 256)
         else:
@@ -116,7 +123,7 @@ class CNNPolicy(FFPolicy):
 
         if hasattr(self, 'gru'):
             if inputs.size(0) == states.size(0):
-                if hasattr(self, 'att'):
+                if self.use_att == 'spatial':
                     #print("I AMMMM PAYING ATTENTION")
                     #print("BEFORE ATTEND",x.size())
                     x = self.att(x, states*masks)
@@ -128,7 +135,8 @@ class CNNPolicy(FFPolicy):
                     x = states = self.gru(x, states * masks)
             else:
 
-                if hasattr(self, 'att'):
+                if self.use_att == 'spatial':
+                    #print('spatial')
                     x = x.view(-1, states.size(0), 49, 256)
                     masks = masks.view(-1, states.size(0) , 1)
                 else:
@@ -138,13 +146,9 @@ class CNNPolicy(FFPolicy):
                 outputs = []
 
                 for i in range(x.size(0)):
-                    if hasattr(self, 'att'):
-                        #print("I AMMMM PAYING ATTENTION BUT DIFFERENTLY")
-                        #print("BEFORE ATTEND",x[i].size())
-                        #print("SOMETHING IS WRONG HERE", states.size(), masks[i].size())
+                    if self.use_att == 'spatial':
+                        #print('spatial')
                         X = self.att(x[i], states*masks[i])
-                        #print(X)
-                        #print("AFTER ATTEND",x[i].size())
                         hx = states = self.gru(X, states * masks[i])
                         outputs.append(hx)
                     else:
@@ -152,6 +156,10 @@ class CNNPolicy(FFPolicy):
                         outputs.append(hx)
 
                 x = torch.cat(outputs, 0)
+
+            if self.use_att == "temporal":
+                #print('temp')
+                x = self.att(x)
 
         return self.critic_linear(x), x, states
 

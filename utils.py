@@ -63,45 +63,17 @@ class att(nn.Module):
 
 class temporal_att(nn.Module):
     def __init__(self, hidden_in, hidden_out):
-        super(att, self).__init__()
-        self.hidden_in = hidden_in
+        super(temporal_att, self).__init__()
         self.hidden_out = hidden_out
-        self.context_att = nn.Linear(self.hidden_in, self.hidden_out)
-        self.hidden_att = nn.Linear(self.hidden_out, self.hidden_out, bias=False) # NO BIAS
-        self.joint_att = nn.Linear(self.hidden_out, 1)
+        self.hidden_att = nn.Linear(self.hidden_out, 1, bias=False) # NO BIAS
         self.softmax = nn.Softmax(dim=1)
 
-    def forward(self, contexts, hidden):
-        #print(contexts.size(), hidden.size(), "IN THE FORWARD GUY")
-        ##################### -- CONTEXT ENCODED-- ########################
-        #print(contexts.size())
-        c = self.context_att(contexts)
-        #print(c.size(), "THIS IS THE SIZE OF THE CONTEXT GUY")
+    def forward(self, hidden):
 
-        ###################################################################
-        #----------------------------------------------------------------#
-        ##################### -- HIDDEN ENCODED -- ######################
-        #print(hidden.size(), "THE HIDDEN INSIDE ATTENTION")
         h = self.hidden_att(hidden)
-        h = h.unsqueeze(1)
-        #print("BEFORE REPEAT",h.size())
-        h = h.repeat(1, 49, 1)
-        #print(h.size(), "THIS IS THE SIZE OF THE HIDDEN GUY")
-        #h = h.expand(49, 512)
-        ###############################################################
-        #print(c.size(), h.size())
-        final = c + h
-        final = F.tanh(final)
-
-        alpha = self.joint_att(final)
-        #print(alpha.size())
-        alpha = alpha.squeeze(2)
-        #print(alpha)
-        alpha = self.softmax(alpha)
-        #print("THIS IS FINAL", final.size(), "THIS IS alpha", alpha.size(), "AND THIS IS THE CONTEXT", contexts.size())
-        alpha = alpha.unsqueeze(2)
-        weighted_context = torch.sum((alpha * contexts), 1)
-        #print("SHIIIITI I FINISHED ?????????????????",weighted_context.size())
+        alpha = self.softmax(h)
+        #print("THIS IS alpha", alpha.size(), "AND THIS IS THE HIDDEN", hidden.size())
+        weighted_context = alpha * hidden
         return weighted_context
 
 

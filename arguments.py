@@ -57,8 +57,7 @@ def get_args():
                         help='disables CUDA training')
     parser.add_argument('--recurrent-policy', action='store_true', default=False,
                         help='use a recurrent policy')
-    parser.add_argument('--att', action='store_true', default=False,
-                        help='Attention policy')
+    parser.add_argument('--att', help="Attention policy", choices=['spatial', 'temporal', 'None'], default='None')
     parser.add_argument('--no-vis', action='store_true', default=True,
                         help='disables visdom visualization')
 

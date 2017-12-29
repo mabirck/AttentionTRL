@@ -67,8 +67,8 @@ def main():
         win = None
 
     extra = "_".join([ name[:4] for name in args.env_name ])
-    if args.att:
-        extra = 'att_'+extra
+    if args.att != 'None':
+        extra = args.att+'_'+extra
         if args.transfer:
             extra = 'transfer_'+extra
 
@@ -267,8 +267,8 @@ def main():
             save_model = [save_model,
                             hasattr(envs, 'ob_rms') and envs.ob_rms or None]
 
-            if args.att:
-                extra = 'att'
+            if args.att != 'None':
+                extra = args.att
             else:
                 extra = ''
 
