@@ -158,9 +158,10 @@ class CNNPolicy(FFPolicy):
                 x = torch.cat(outputs, 0)
 
             if self.use_att == "temporal":
-                #print('temp')
+                #print('X_ before attention', x.size())
                 x = self.att(x)
-
+                #print('X_after attention', x.size())
+                
         return self.critic_linear(x), x, states
 
 

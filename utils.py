@@ -69,11 +69,24 @@ class temporal_att(nn.Module):
         self.softmax = nn.Softmax(dim=1)
 
     def forward(self, hidden):
+        #print(hidden.size(), "h before")
+        hidden = hidden.view(-1, 8, 256)
+        sz = hidden.size(0)
+        hidden = hidden.permute(1, 0, 2)
 
         h = self.hidden_att(hidden)
+        #print(h.size(), "h after")
         alpha = self.softmax(h)
         #print("THIS IS alpha", alpha.size(), "AND THIS IS THE HIDDEN", hidden.size())
+        #print(alpha)
         weighted_context = alpha * hidden
+        #print("THIS IS WC", weighted_context)
+        weighted_context = torch.sum(weighted_context, dim=1)
+        #print(weighted_context.size(), "HERE WE GO")
+        weighted_context.unsqueeze_(1)
+        weighted_context = weighted_context.repeat(1,sz,1)
+        weighted_context = weighted_context.permute(0, 1, 2)
+        weighted_context = weighted_context.view(-1, 256)
         return weighted_context
 
 
